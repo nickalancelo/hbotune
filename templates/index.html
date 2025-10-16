@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBOTune</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            margin-top: 50px;
+            max-width: 600px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #004085;
+        }
+        .info-note {
+            text-align: center;
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .info-note .en-sub-dark {
+            display: block;
+            color: rgba(0,0,0,0.6);
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .btn-custom {
+            background-color: #004085;
+            color: white;
+            font-weight: bold;
+            width: 100%;
+        }
+        .btn-custom:hover {
+            background-color: #003366;
+            color: white;
+        }
+        .en-sub {
+            display: block;
+            color: rgba(255,255,255,0.85); /* Predict çok açık beyaz */
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        .en-sub-dark {
+            display: block;
+            color: rgba(0,0,0,0.6);
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        #result-box { display: none; } /* JS karar verecek */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HBOTune</h1>
+
+        <p class="info-note">
+            Hasta verilerini girerek tahmini işitme kazanımını görebilirsiniz.
+            <span class="en-sub-dark">Enter patient data to estimate predicted hearing gain.</span>
+        </p>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Yaş:
+                    <span class="en-sub-dark">Age</span>
+                </label>
+                <input type="number" name="Yaş" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Cinsiyet:
+                    <span class="en-sub-dark">Gender</span>
+                </label>
+                <select name="Cinsiyet" class="form-select" required>
+                    <option value="Erkek">Erkek (Male)</option>
+                    <option value="Kadın">Kadın (Female)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tedavi Gecikmesi (gün):
+                    <span class="en-sub-dark">Treatment Delay (days)</span>
+                </label>
+                <input type="number" name="Tedavi Gecikmesi (gün)" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">HBOT Seans Sayısı:
+                    <span class="en-sub-dark">Number of HBOT Sessions</span>
+                </label>
+                <input type="number" name="HBOT Seans Sayısı" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ek Hastalık:
+                    <span class="en-sub-dark">Comorbidity</span>
+                </label>
+                <select name="Ek Hastalık" class="form-select" required>
+                    <option value="Var">Var (Present)</option>
+                    <option value="Yok">Yok (Absent)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Sigara Kullanımı:
+                    <span class="en-sub-dark">Smoking Status</span>
+                </label>
+                <select name="Sigara Kullanımı" class="form-select" required>
+                    <option value="Evet">Evet (Yes)</option>
+                    <option value="Hayır">Hayır (No)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Sistemik Steroid Kullanımı:
+                    <span class="en-sub-dark">Systemic Steroid Use</span>
+                </label>
+                <select name="Sistemik Steroid Kullanımı" class="form-select" required>
+                    <option value="Evet">Evet (Yes)</option>
+                    <option value="Hayır">Hayır (No)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Intratimpanik Steroid Kullanımı:
+                    <span class="en-sub-dark">Intratympanic Steroid Use</span>
+                </label>
+                <select name="Intratimpanik Steroid Kullanımı" class="form-select" required>
+                    <option value="Evet">Evet (Yes)</option>
+                    <option value="Hayır">Hayır (No)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Başlangıç PTA (dB):
+                    <span class="en-sub-dark">Initial PTA (dB)</span>
+                </label>
+                <input type="number" name="Başlangıç PTA (dB)" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn btn-custom">
+                Tahmin Et
+                <span class="en-sub">Predict</span>
+            </button>
+        </form>
+
+        <!-- Sonuç kutusu: prediction değeri index'e basılırsa veya localStorage'da varsa gösterilecek -->
+        <div id="result-box" class="alert alert-info mt-4 text-center">
+            <h5>
+                Tahmini İşitme Kazanımı:
+                <strong id="predVal">{{ prediction }}</strong> dB
+            </h5>
+            <span class="en-sub-dark">Predicted Hearing Improvement</span>
+        </div>
+
+        <div class="footer">
+            Dr. Celaleddin Furkan Bayındır
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const box = document.getElementById('result-box');
+            const predEl = document.getElementById('predVal');
+
+            // Sunucudan gelen değer (Jinja boş bırakabilir)
+            const serverPred = (predEl && predEl.textContent || '').trim();
+
+            // 1) Eğer sunucudan yeni bir tahmin geldiyse, göster ve localStorage'a yaz.
+            if (serverPred !== '' && !isNaN(Number(serverPred))) {
+                box.style.display = 'block';
+                try { localStorage.setItem('hbotune_last_prediction', serverPred); } catch(e) {}
+                return;
+            }
+
+            // 2) Sunucu boş bıraktıysa, localStorage'daki son tahmini göster (varsa).
+            try {
+                const last = localStorage.getItem('hbotune_last_prediction');
+                if (last && !isNaN(Number(last))) {
+                    predEl.textContent = last;
+                    box.style.display = 'block';
+                    return;
+                }
+            } catch (e) {}
+
+            // 3) Hiç veri yoksa gizle.
+            box.style.display = 'none';
+        })();
+    </script>
+</body>
+</html>
